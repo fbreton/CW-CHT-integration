@@ -61,6 +61,8 @@ def get_push_metrics(region, accesskey, secretkey, chtkey, starttime, endtime, n
             
             assetid = region + ":" + ec2.describe_instances({instance_ids: [metric.dimensions[0].value]}).reservations[0].owner_id + ":" + metric.dimensions[0].value
             
+           # We get an agregation of all file systems or logical disk. However, the metrics API require an fs path in the 
+           # asset id, so we just arbitrary put the path to /
             if metric.metric_name[0..1] == "fs"
                 assettype = "aws:ec2:instance:fs"
                 assetid +=":/"
@@ -68,18 +70,16 @@ def get_push_metrics(region, accesskey, secretkey, chtkey, starttime, endtime, n
                 assettype = "aws:ec2:instance"
             end
             
+           # For windows we can only get the logical disk free space percent, but we need the % used and 
+           # we change the metric name to the expected value and we'll calculate the value later
             if metric.metric_name == "fs:free:percent"
                 metname = "fs:used:percent"
             else
                 metname = metric.metric_name
             end
-            
-            if metric.metric_name.split(':').last == "percent"
-                unit = "Percent"
-            else
-                unit = "Gigabytes"
-            end
-            
+          
+           # get the metric from AWS from the specific name space agregated on 1hour
+           # time frame as expected from CHT
             resp = cw.get_metric_data({
                 metric_data_queries: [
                     {
@@ -128,6 +128,7 @@ def get_push_metrics(region, accesskey, secretkey, chtkey, starttime, endtime, n
             maximum = resp.metric_data_results[1]
             minimum = resp.metric_data_results[2]
             
+          # build the header of the metric document as expected by CHT
             lg = average.timestamps.length - 1
             if lg > -1
                 metricoutput[:metrics][:datasets][metind] = {"metadata": {
@@ -139,9 +140,13 @@ def get_push_metrics(region, accesskey, secretkey, chtkey, starttime, endtime, n
                     "values": []
                     }
             end
-                
+           
+          # build the values part of the document as expected by CHT 
             for i in (0..lg)
                 timestamp = average.timestamps[i].strftime("%Y-%m-%dT%H:%M:%S%z").insert(-3,':')
+              
+              # For windows we can only get the logical disk free space percent, but we need the % used  
+              # that we get with 100 - free % space
                 if metric.metric_name == "fs:free:percent"
                     av = 100 - average.values[i]
                     max = 100 - maximum.values[i]
@@ -200,6 +205,7 @@ def update_conf_file(params,file_name)
     file.close
 end
 
+# Read the conf file to get the params
 params = config_file(CONFIG_FILE)
 regions = params["AWSRegions"].split(',').collect(&:strip)
 namespaces = params["MetricNameSpaces"].split(',').collect(&:strip)
@@ -217,8 +223,3 @@ end
 # Update the StarTime in the conf file for the next run
 params["StartTime"] = endtime.gsub(/..:00Z/,"00:00Z")
 update_conf_file(params, CONFIG_FILE)
-
-
-
-
-
