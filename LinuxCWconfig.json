@@ -1,0 +1,23 @@
+{
+"metrics": {
+                "metrics_collected": {
+                        "disk": {
+                                "measurement": [
+                                        {"name": "used_percent", "rename": "fs:used:percent", "unit": "Percent"},
+                                ],
+                                "metrics_collection_interval": 300,
+                                "resources": [
+                                        "*"
+                                ]
+                        },
+                        "mem": {
+                                "measurement": [
+                                        {"name": "used_percent", "rename": "memory:used:percent","unit": "Percent"}
+                                ],
+                                "metrics_collection_interval": 300
+                        }
+                },
+                "append_dimensions": {"InstanceId": "${aws:InstanceId}"},
+                "aggregation_dimensions": [["InstanceId"]]
+        }
+}

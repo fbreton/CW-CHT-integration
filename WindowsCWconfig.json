@@ -1,0 +1,21 @@
+{
+	"metrics": {
+		"metrics_collected": {
+			"LogicalDisk": {
+				"measurement": [{
+					"name": "% Free Space", 
+					"rename": "fs:free:percent", "unit": "Percent"}],
+				"metrics_collection_interval": 300,
+				"resources": ["*"]
+			},
+			"Memory": {
+				"measurement": [{
+					"name": "% Committed Bytes In Use", 
+					"rename": "memory:used:percent", "unit": "Percent"}],
+				"metrics_collection_interval": 300
+			}
+		},
+		"append_dimensions": {"InstanceId": "${aws:InstanceId}"},
+		"aggregation_dimensions": [["InstanceId"]]
+	}
+}
