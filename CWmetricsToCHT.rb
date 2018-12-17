@@ -1,6 +1,5 @@
 #!/usr/bin/env ruby
 require 'aws-sdk'
-require 'yaml'
 require 'time'
 require 'rest-client'
 require 'json'
